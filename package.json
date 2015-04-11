@@ -1,0 +1,14 @@
+{
+  "name": "ThreeTest",
+  "version": "1.0.0",
+  "description": "A little test program to play with three.js",
+  "license": "MIT",
+  "author": "Drew Heintz",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "express": "^4.11.x"
+  }
+}
