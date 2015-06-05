@@ -3,13 +3,35 @@
 <head>
     <meta charset="urf-8">
     <title>Three Test</title>
-    <link rel="stylesheet" type="text/css" href="/static/css/basic.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/game.css">
 </head>
 <body>
+    <!-- Place to display test data -->
+    <div id="data"></div>
+    <!-- Viewport for WebGL display -->
+    <div id="viewport"></div>
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r71/three.min.js"></script>
-    <script src="static/js/tween.min.js"></script>
-    <script src="/static/js/main.js"></script>
+    <!-- Sidebar for editor -->
+    <aside id="sidebar">
+        Select block type:
+        <div id="block-select">
+            <select>
+                <option value="block_none">Empty</option>
+                <option value="block_normal">Normal</option>
+                <option value="block_rock">Rock</option>
+            </select>
+        </div>
+        <br/>
+    </aside>
+    
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r71/three.min.js"></script>
+    <script type="text/javascript" src="static/js/tween.min.js"></script>
+    <script type="text/javascript" src="static/js/input.js"></script>
+    <script type="text/javascript" src="static/js/blockdude.js"></script>
+    <script type="text/javascript" src="static/js/game-camera-controller.js"></script>
+    <script type="text/javascript" src="static/js/player.js"></script>
+    <script type="text/javascript" src="static/js/level.js"></script>
+    <script type="text/javascript" src="static/js/game.js"></script>
     
 </body>
 </html>

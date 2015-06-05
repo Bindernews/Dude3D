@@ -3,60 +3,9 @@
 var PI = 3.14159265,
     PI_2 = PI * 2;
 
-/**
- * Holds keycodes for various keys used in the game
- */
-var KCODE = {
-    
-};
-
-/**
- * Handles keyboard input.
- */
-var Key = {
-    /** Keeps track of keys which are currently held down */
-    _pressed: {},
-    
-    /** Constants */
-    W: 87,
-    A: 65,
-    S: 83,
-    D: 68,
-    E: 69,
-    LEFT:  37,
-    UP:    38,
-    RIGHT: 39,
-    DOWN:  40,
-
-    /**
-     * Check if a key is currently down.
-     * 
-     * @param {number} code - the key code of the key to check
-     * @return {boolean} True if the key is currently down false otherwise
-     */
-    isDown: function( code ) {
-        return this._pressed[code];
-    },
-    
-    /**
-     * Event handler for the onkeydown event
-     */
-    onKeydown: function( event ) {
-        this._pressed[event.keyCode] = true;
-    },
-    
-    /** 
-     * Event handler for the onkeyup event
-     */
-    onKeyup: function( event ) {
-        delete this._pressed[event.keyCode];
-    },
-};
-
 function runGame() {
     /* Step 1 is to assume three.js has been loaded becase if not there isn't
      * really much we can do. */
-    
     
     var sceneWidth = window.innerWidth,
         sceneHeight = window.innerHeight;
@@ -83,31 +32,59 @@ function runGame() {
     box2.position.x = 2;
     scene.add( box2 );
 
-    camera.position.z = 4;
     camera.angleZ = 0;
+    camera.angleY = PI / 3;
     
     var camera_distance = 3;
     var origin = new THREE.Vector3( 0, 0, 0 );
     
+    var loopBounds = function( val, min, max ) {
+        var delta = max - min;
+        if ( val < min ) {
+            return val + delta;
+        }
+        if ( val > max ) {
+            return val - delta;
+        }
+        return val;
+    };
+    
+    var sign = function( val ) {
+        if ( val > 0 ) {
+            return 1;
+        }
+        if ( val < 0 ) {
+            return -1;
+        }
+        return 0;
+    };
+    
     function update( gameTime ) {
         // update the camera angle
-        var angleZ = camera.angleZ;
+        var angleZ = camera.angleZ,
+            angleY = camera.angleY,
+            angleSpeed = 0.1;
         if ( Key.isDown( Key.LEFT ) ) {
-            angleZ -= 0.1;
+            angleZ -= angleSpeed;
         }
         if ( Key.isDown( Key.RIGHT ) ) {
-            angleZ += 0.1;
+            angleZ += angleSpeed;
         }
-        if ( angleZ < 0 ) {
-            angleZ += PI_2;
+        if ( Key.isDown( Key.UP ) ) {
+            angleY += angleSpeed;
         }
-        if ( angleZ > PI_2 ) {
-            angleZ -= PI_2;
+        if ( Key.isDown( Key.DOWN ) ) {
+            angleY -= angleSpeed;
         }
-        camera.position.x = camera_distance * Math.cos( angleZ );
+        angleZ = loopBounds( angleZ, 0, PI_2 );
+        angleY = loopBounds( angleY, 0, PI_2 );
+        
+        camera.position.x = camera_distance * sign(Math.cos( angleZ )) * Math.cos( angleY );
         camera.position.y = camera_distance * Math.sin( angleZ );
+        camera.position.z = camera_distance * Math.sin( angleY );
         camera.lookAt( origin );
         camera.angleZ = angleZ;
+        camera.angleY = angleY;
         
         // spin the box(es)
         box2.rotation.z += 0.05;
@@ -115,6 +92,7 @@ function runGame() {
 
     function render( time ) {
         requestAnimationFrame( render );
+        TWEEN.update( time );
         update( time );
         renderer.render( scene, camera );
     }
@@ -125,6 +103,4 @@ window.addEventListener( "load", function() {
     runGame();
 }, true );
 
-window.addEventListener( "keydown", function(event) { Key.onKeydown(event); }, false );
-window.addEventListener( "keyup", function(event) { Key.onKeyup(event); }, false );
 

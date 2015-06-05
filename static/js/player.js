@@ -1,70 +1,180 @@
 
-function Player( scene ) {
-    this.scene = scene;
-    this.geometry = new THREE.BoxGeometry( 1, 1, 1 );
-    this.material = new THREE.MeshBasicMaterial( { color: 0xff0000, wireframe: true } );
-    this.cube = new THREE.Mesh( this.geometry, this.material );
-    this.state = "normal"
-    scene.add( this.cube );
-}
+var BD = BD || {};
 
-Player.prototype.update = function( gameTime ) {
-    if ( this.state === "normal" ) {
-        // only allow keyboard input if the player's state is normal
-        // otherwise they might be in an animation or something and we
-        // don't want to interrupt that.
+(function(){
+
+    BD.Player = function() {
+        var scene = BD.Game.scene;
         
-        // here we move the player based on the camera's angle
-        var cameraDirection = PI * 3 / 2;
-        var moveDirection = false;
-        if ( Key.isDown( Key.W ) ) {
-            moveDirection = PI;
-        }
-        if ( Key.isDown( Key.A ) ) {
-            moveDirection = PI * 3 / 2;
-        }
-        if ( Key.isDown( Key.S ) ) {
-            moveDirection = 0;
-        }
-        if ( Key.isDown( Key.D ) ) {
-            moveDirection = PI / 2;
-        }
-        if ( moveDirection ) {
-            var dx = Math.cos( cameraDirection + moveDirection );
-            var dy = Math.sin( cameraDirection + moveDirection );
-            this.move( dx, dy );
-        }
-        else {
-            // don't allow pickup/place and movement in the same frame
-            if ( Key.isDown( Key.E ) ) {
+        /** State of the player */
+        this.state = "normal"
+        /** Direction the player is facing on the z axis */
+        this.direction = 0;
+        /** What is the player currently carrying? */
+        this.carrying_ = null;
+        
+        this.geometry = new THREE.BoxGeometry( 0.9, 0.9, 1 );
+        this.model = new THREE.Mesh( this.geometry, new THREE.MeshBasicMaterial(
+            {color: 0xff0000, wireframe: false}) );
+        var modelWireframe = new THREE.Mesh( this.geometry, new THREE.MeshBasicMaterial(
+            {color: 0xffffff, wireframe: true}) );
+        this.model.add(modelWireframe);
+        scene.add( this.model );
+        
+        this.teleport(0, 0, 1);
+        
+        BD.data.player = {
+            pos: this.model.position,
+            state: this.state,
+        };
+    };
+
+
+    BD.Player.prototype = {
+        constructor: BD.Player,
+
+        
+        destroy: function() {
+            var scene = BD.Game.scene;
+            scene.remove(this.model);
+        },
+        
+
+        update: function( delta ) {
+            if( this.state === "normal" ) {
+                // only allow keyboard input if the player's state is normal
+                // otherwise they might be in an animation or something and we
+                // don't want to interrupt that.
+
+                // here we move the player based on the camera's angle
+                var cameraDirection = BD.Game.cameraController.direction;
+                var moveDirection = false;
+                if(Input.isDown( Input.Key.W )) {
+                    moveDirection = Math.PI;
+                }
+                if(Input.isDown( Input.Key.A )) {
+                    moveDirection = Math.PI * 3 / 2;
+                }
+                if(Input.isDown( Input.Key.S )) {
+                    moveDirection = 0;
+                }
+                if(Input.isDown( Input.Key.D )) {
+                    moveDirection = Math.PI / 2;
+                }
+
+                if(moveDirection !== false) {
+                    this.direction = cameraDirection + moveDirection;
+                    var dx = Math.cos( this.direction );
+                    var dy = Math.sin( this.direction );
+                    this.move( dx, dy );
+                } else if(Input.isDown(Input.Key.E)) {
+                    // don't allow pickup/place and movement in the same frame
+                    if(this.carrying_ === null) {
+                        this.pickUp( this.direction );
+                    } else {
+                        this.putDown( this.direction );
+                    }
+                }
             }
-        }
+            BD.data.player.state = this.state;
+        },
+        
+        
+        /**
+         * Move the player by dx and dy. Handles stepping up if necessary.
+         * 
+         * @param {number} dx - delta x by which to try to move the player
+         * @param {number} dy - delta y by which to try to move the player
+         * @return true if movement was successful false otherwise
+         */
+        move: function( dx, dy ) {
+            // placeholder code to move the player
+            var newX = this.x + dx,
+                newY = this.y + dy,
+                model = BD.Game.model;
+            if( model.getBlock( newX, newY, this.z ) == BD.Blocks.NONE ) {
+                // find out how far we are falling, if at all
+                var fallDistance = 0;
+                while ( model.getBlock( newX, newY, this.z - fallDistance - 1 ) == BD.Blocks.NONE ) {
+                    fallDistance += 1;
+                }
 
-        // update the player model's position
-        this.cube.position.set( this.x, this.y this.z );
-    }
-};
+                // create animation
+                var source = this.model.position,
+                    target = {
+                        x: Math.round(source.x + (dx * BD.BLOCK_SIZE)),
+                        y: Math.round(source.y + (dy * BD.BLOCK_SIZE))
+                    },
+                    targetZ = {z: source.z - (fallDistance * BD.BLOCK_SIZE)},
+                    anim = new TWEEN.Tween(source).to(target, BD.TWEEN_TIME * 0.75);
+                anim.easing(TWEEN.Easing.Quadratic.Out);
+                if(fallDistance > 0) {
+                    anim.chain(new TWEEN.Tween(source).to(targetZ, BD.TWEEN_TIME).onComplete(
+                        this.endAnimation_()));
+                } else {
+                    anim.onComplete(this.endAnimation_());
+                }
+                this.animate( anim );
+                anim.start();
+                this.x = newX;
+                this.y = newY;
+                return true;
+            } else if( model.getBlock( newX, newY, this.z + 1 ) == BD.Blocks.NONE ) {
+                // move and step up 1
+        //        var anim = null;
+        //        this.animate( anim );
+                return true;
+            } else {
+                return false;
+            }
+        },
+        
+        
+        /**
+         * Teleport the player to the given block coordinates.
+         * @param {number} x - location on x-axis
+         * @param {number} y - location on y-axis
+         * @param {number} z - location on z-axis
+         */
+        teleport: function( x, y, z ) {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.model.position.set(x * BD.BLOCK_SIZE,
+                                    y * BD.BLOCK_SIZE,
+                                    z * BD.BLOCK_SIZE);
+        },
+        
+        
+        animate: function( animation ) {
+            this.state = "animation";
+            this.animation = animation;
+        },
+        
+        
+        endAnimation_: function() {
+            var self = this;
+            return function() {
+                self.state = 'normal';
+                self.animation = null;
+            };
+        },
+        
+        
+        /** NYI - API not set
+         * Pick up whatever is in front of the player in the given direction.
+         *
+         * @param {number} direction - direction to pick up an object from
+         * @return true if an object was picked up false otherwise
+         */
+        pickUp: function( direction ) {
+        },
 
-/**
- * Move the player by dx and dy. Handles stepping up if necessary.
- * 
- * @param {number} dx - delta x by which to try to move the player
- * @param {number} dy - delta y by which to try to move the player
- * @return true if movement was successfull false otherwise
- */
-Player.prototype.move = function( dx, dy ) {
-    // placeholder code to move the player
-    var newX = this.x + dx,
-        newY = this.y + dy;
-    if ( Game.model.get( newX, newY, this.z ) == 0 ) {
-        // move in desired direction
-        return true;
-    }
-    else if ( Game.model.get( newX, newY, this.z + 1 ) == 0 ) {
-        // move and step up 1
-        return true;
-    }
-    else {
-        return false;
-    }
-};
+        
+        /** NYI - API not set
+         * Put down whatever the player is currently carrying.
+         */
+        putDown: function( direction ) {
+        },
+    };
+})();

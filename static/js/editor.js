@@ -2,15 +2,11 @@
 var BD = BD || {}
 BD.data = BD.data || {};
 
-BD.Game = {
+BD.Editor = {
     player: null,
     cameraController: null,
     previousTime: 0,
     
-    /**
-     * Initialize the game state. Should be called only after the entire page
-     * has loaded.
-     */
     initialize: function() {
         var sceneWidth = window.innerWidth,
             sceneHeight = window.innerHeight - 20;
@@ -22,11 +18,9 @@ BD.Game = {
         this.renderer.setSize( sceneWidth, sceneHeight );
         document.getElementById("viewport").appendChild( this.renderer.domElement );
         
-        this.setViewportSize(sceneWidth, sceneHeight);
-        
         // temp code for testing
+        this.cameraController = new BD.CameraController();
         this.player = new BD.Player();
-        this.cameraController = new BD.GameCameraController(this.camera, this.player.model);
         this.dataDisplay = document.getElementById("data");
         this.model = new BD.Level({
             width: 10,
@@ -43,25 +37,9 @@ BD.Game = {
         })();
     },
     
-    /**
-     * Set the viewport size. Should not be called before initialize().
-     *
-     * @param {number} width - the new width of the canvas
-     * @param {number} height - new height of the view canvas
-     */
-    setViewportSize: function(width, height) {
-        var elem = document.getElementById('viewport');
-        elem.style.width = width;
-        elem.style.height = height;
-        this.camera.aspect = width / height;
-        this.renderer.setSize(width, height);
+    loadLevel: function(name) {
     },
     
-    
-    /**
-     * Main game run function. Should be called after initialize() and after
-     * the entire page has loaded.
-     */
     run: function() {
         var self = this;
         var updateF = (function(time) {
@@ -74,12 +52,6 @@ BD.Game = {
         requestAnimationFrame(updateF);
     },
     
-    
-    /**
-     * Update function called each frame. Unfortunately the game is currently
-     * limited by framerate which is not optimal but it's easy and because
-     * this is not a multiplayer game it doesn't matter very much.
-     */
     update: function(time) {
         var delta = time - this.previousTime;
         this.previousTime = time;
@@ -89,8 +61,7 @@ BD.Game = {
     },
 };
 
-
 window.addEventListener('load', function() {
-    BD.Game.initialize();
-    BD.Game.run();
+    BD.Editor.initialize();
+    BD.Editor.run();
 }, true);
