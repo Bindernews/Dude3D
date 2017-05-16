@@ -1,3 +1,4 @@
+var BD = BD || {};
 
 /**
  * Handles keyboard input.
@@ -84,6 +85,40 @@ var Input = {
         this.released_.clear();
     }
 };
+
+/**
+ * Abstracts the controls from keyboard input. Also allows for changing key
+ * bindings.
+ */
+(function () {
+    function ControlKey(name, key) {
+        this.name = name;
+        this.key = key;
+    }
+    ControlKey.prototype = {
+        isDown: function() {
+            return Input.isDown(this.key);
+        },
+        
+        isPressed: function() {
+            return Input.isPressed(this.key);
+        },
+        
+        isReleased: function() {
+            return Input.isReleased(this.key);
+        },
+    };
+    
+    BD.Control = {
+        C_UP: new ControlKey('Up', Input.Key.W),
+        C_DOWN: new ControlKey('Down', Input.Key.S),
+        C_LEFT: new ControlKey('Left', Input.Key.A),
+        C_RIGHT: new ControlKey('Right', Input.Key.D),
+        C_ACTION: new ControlKey('Action', Input.Key.E),
+        C_CAM_LEFT: new ControlKey('Camera left', Input.Key.LEFT),
+        C_CAM_RIGHT: new ControlKey('Camera right', Input.Key.RIGHT),
+    };
+})();
 
 window.addEventListener( "keydown", function(event) { Input.onKeydown(event); }, false );
 window.addEventListener( "keyup", function(event) { Input.onKeyup(event); }, false );

@@ -49,16 +49,18 @@ var BD = BD || {};
                 // here we move the player based on the camera's angle
                 var cameraDirection = BD.Game.cameraController.direction;
                 var moveDirection = false;
-                if(Input.isDown( Input.Key.W )) {
+                var Control = BD.Control;
+                
+                if(Control.C_UP.isDown()) {
                     moveDirection = Math.PI;
                 }
-                if(Input.isDown( Input.Key.A )) {
+                if(Control.C_LEFT.isDown()) {
                     moveDirection = Math.PI * 3 / 2;
                 }
-                if(Input.isDown( Input.Key.S )) {
+                if(Control.C_DOWN.isDown()) {
                     moveDirection = 0;
                 }
-                if(Input.isDown( Input.Key.D )) {
+                if(Control.C_RIGHT.isDown()) {
                     moveDirection = Math.PI / 2;
                 }
 
@@ -67,7 +69,7 @@ var BD = BD || {};
                     var dx = Math.cos( this.direction );
                     var dy = Math.sin( this.direction );
                     this.move( dx, dy );
-                } else if(Input.isDown(Input.Key.E)) {
+                } else if(Control.C_ACTION.isDown()) {
                     // don't allow pickup/place and movement in the same frame
                     if(this.carrying_ === null) {
                         this.pickUp( this.direction );
@@ -92,7 +94,7 @@ var BD = BD || {};
             var newX = this.x + dx,
                 newY = this.y + dy,
                 model = BD.Game.model;
-            if( model.getBlock( newX, newY, this.z ) == BD.Blocks.NONE ) {
+            if ( model.getBlock( newX, newY, this.z ) == BD.Blocks.NONE ) {
                 // find out how far we are falling, if at all
                 var fallDistance = 0;
                 while ( model.getBlock( newX, newY, this.z - fallDistance - 1 ) == BD.Blocks.NONE ) {
@@ -108,7 +110,7 @@ var BD = BD || {};
                     targetZ = {z: source.z - (fallDistance * BD.BLOCK_SIZE)},
                     anim = new TWEEN.Tween(source).to(target, BD.TWEEN_TIME * 0.75);
                 anim.easing(TWEEN.Easing.Quadratic.Out);
-                if(fallDistance > 0) {
+                if (fallDistance > 0) {
                     anim.chain(new TWEEN.Tween(source).to(targetZ, BD.TWEEN_TIME).onComplete(
                         this.endAnimation_()));
                 } else {
@@ -119,7 +121,7 @@ var BD = BD || {};
                 this.x = newX;
                 this.y = newY;
                 return true;
-            } else if( model.getBlock( newX, newY, this.z + 1 ) == BD.Blocks.NONE ) {
+            } else if ( model.getBlock( newX, newY, this.z + 1 ) == BD.Blocks.NONE ) {
                 // move and step up 1
         //        var anim = null;
         //        this.animate( anim );

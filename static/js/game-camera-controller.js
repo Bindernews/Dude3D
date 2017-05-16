@@ -4,6 +4,7 @@ var BD = BD || {};
 (function(){
 
     var Key = Input.Key;
+    var Control = BD.Control
 
     /**
      * Construct a new GameCameraController object
@@ -27,9 +28,10 @@ var BD = BD || {};
         /** A reference to the object we are following */
         this.following_ = following;
         
-        this.keyRepeat_ = {};
-        this.keyRepeat_[Input.Key.LEFT] = 0;
-        this.keyRepeat_[Input.Key.RIGHT] = 0;
+        this.keyRepeat_ = {
+            Control.C_CAM_LEFT: 0,
+            Control.C_CAM_RIGHT: 0,
+        };
     };
 
     BD.GameCameraController.prototype = {
@@ -42,14 +44,16 @@ var BD = BD || {};
          *        previous frame.
          */
         update: function(delta) {
-            this.keyUpdate(Input.Key.LEFT);
-            this.keyUpdate(Input.Key.RIGHT);
+            this.keyUpdate(Control.C_CAM_LEFT);
+            this.keyUpdate(Control.C_CAM_RIGHT);
 
             if (this.state == "normal") {
-                if (Input.isDown(Key.LEFT) && this.keyRepeat_[Key.LEFT] == 0) {
+                if (Control.C_CAM_LEFT.isDown()
+                    && this.keyRepeat_[Control.C_CAM_LEFT] == 0) {
                     this.setDirection(this.viewDirection - (Math.PI / 2));
                 }    
-                if (Input.isDown(Key.RIGHT) && this.keyRepeat_[Key.RIGHT] == 0) {
+                if (Control.C_CAM_RIGHT.isDown()
+                    && this.keyRepeat_[Control.C_CAM_RIGHT] == 0) {
                     this.setDirection(this.viewDirection + (Math.PI / 2));
                 }
             }
@@ -97,11 +101,11 @@ var BD = BD || {};
             animation.start();
         },
         
-        keyUpdate: function(keycode) {
-            if (Input.isDown(keycode)) {
-                this.keyRepeat_[keycode] = Math.max(this.keyRepeat_[keycode] - 1, 0);
+        keyUpdate: function(control) {
+            if (control.isDown()) {
+                this.keyRepeat_[control] = Math.max(this.keyRepeat_[control] - 1, 0);
             } else {
-                this.keyRepeat_[keycode] = 0;
+                this.keyRepeat_[control] = 0;
             }
         },
     };
